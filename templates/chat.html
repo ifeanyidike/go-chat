@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link
+      rel="stylesheet"
+      href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css"
+    />
+    <style>
+      ul#messages {
+        list-style: none;
+      }
+      ul#messages li {
+        margin-bottom: 2px;
+      }
+      ul#messages li img {
+        margin-right: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="panel panel-default">
+        <div class="panel-body">
+          <ul id="messages"></ul>
+        </div>
+      </div>
+      <form id="chatbox" role="form">
+        <div class="form-group">
+          <label for="message">Send a message as {{.UserData.name}}</label> or
+          <a href="/logout">Sign out</a>
+          <textarea id="message" class="form-control"></textarea>
+        </div>
+        <input type="submit" value="Send" class="btn btn-default" />
+      </form>
+    </div>
+  </body>
+
+  <script>
+    let socket = null;
+    let msgBox = document.querySelector("#chatbox textarea");
+    let messages = document.querySelector("#messages");
+
+    document.querySelector("#chatbox").addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!msgBox.value) return false;
+
+      if (!socket) {
+        alert("Error: There is no socket connection.");
+        return false;
+      }
+      socket.send(JSON.stringify({ Message: msgBox.value }));
+      msgBox.value = "";
+      return false;
+    });
+
+    if (!window.WebSocket) {
+      alert("Error: Your browser does not support web sockets.");
+    } else {
+      socket = new WebSocket("ws://{{.Host}}/room");
+      socket.onclose = function () {
+        alert("Connection has been closed.");
+      };
+      socket.onmessage = function (e) {
+        const message = JSON.parse(e.data);
+        let listElement = document.createElement("li");
+
+        const bold = document.createElement("strong");
+        const span = document.createElement("span");
+        const time = document.createElement("span");
+        const imgElement = document.createElement("img");
+
+        imgElement.style.width = "50px";
+        imgElement.style.verticalAlign = "middle";
+
+        imgElement.setAttribute("title", message.Name);
+        imgElement.setAttribute("src", message.AvatarURL);
+        bold.textContent = message.Name + ": ";
+        span.textContent = message.Message;
+        time.textContent = " " + message.When;
+
+        listElement.appendChild(imgElement);
+        listElement.appendChild(bold);
+        listElement.appendChild(span);
+        listElement.appendChild(time);
+
+        messages.appendChild(listElement);
+      };
+    }
+  </script>
+</html>
